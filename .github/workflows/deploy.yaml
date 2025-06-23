@@ -22,7 +22,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -44,11 +43,39 @@ jobs:
           version: latest
 
       - name: Build package
-        if: github.event_name != 'release'
         run: yarn run make
 
-      - name: Publish release assets to GitHub
+      - name: Sign Wendvine and create app
         if: github.event_name == 'release'
+        shell: pwsh
+        run: |
+          $arch = "x64"
+          python -m castlabs_evs.account -n reauth -A $env:CASTLABS_ACCOUNT_NAME -P $env:CASTLABS_ACCOUNT_PASSWORD
+          python -m castlabs_evs.vmp sign-pkg "out\Kenku FM-win32-$arch"
+
+          yarn --cwd ./publish/windows install --immutable
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          node ./publish/windows/index.js ./ $version
+
+      - name: Upload all signed assets to GitHub Release
+        if: github.event_name == 'release'
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn run publish
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart("v")
+
+          $exePath = "out\\windows\\kenku-fm-$version-win32-x64.exe"
+          $nupkgPath = "out\\windows\\kenku-fm-$version-full.nupkg"
+          $releasesPath = "out\\windows\\RELEASES"
+
+          if (-not (Test-Path $exePath)) { Write-Error "Missing file: $exePath"; exit 1 }
+          if (-not (Test-Path $nupkgPath)) { Write-Error "Missing file: $nupkgPath"; exit 1 }
+          if (-not (Test-Path $releasesPath)) { Write-Error "Missing file: $releasesPath"; exit 1 }
+
+          gh release upload $tag `
+            "$exePath" `
+            "$nupkgPath" `
+            "$releasesPath" `
+            --clobber
