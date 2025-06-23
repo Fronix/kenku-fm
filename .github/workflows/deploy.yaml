@@ -32,7 +32,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
+      - name: Get pip cache dir
+        id: pip-cache-dir
+        run: |
+          echo "dir=$(python -m pip cache dir)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
       - name: Restore pip cache
         uses: actions/cache/restore@v4
         id: pip-cache
@@ -50,7 +54,7 @@ jobs:
       - name: Save pip cache
         uses: actions/cache/save@v4
         with:
-          path: ~/.cache/pip
+          path: ${{ steps.pip-cache-dir.outputs.dir }}
           key: ${{ steps.pip-cache.outputs.cache-primary-key }}
 
       - name: Setup Latest Yarn
