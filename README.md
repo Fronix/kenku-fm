@@ -2,6 +2,8 @@
 
 # Kenku FM
 
+<b>This is a fork from https://github.com/owlbear-rodeo/kenku-fm</b>
+
 Kenku FM is a desktop application for Windows, MacOS and Linux designed to be the easiest way to share music in a Discord voice call.
 
 - Use the Kenku Player interface to share your **local music** and sound effects to your discord calls.
