@@ -32,60 +32,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Get pip cache dir
-        id: pip-cache-dir
-        run: |
-          echo "dir=$(python -m pip cache dir)" >> $env:GITHUB_OUTPUT
-        shell: pwsh
-      - name: Restore pip cache
-        uses: actions/cache/restore@v4
-        id: pip-cache
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            pip-${{ runner.os }}-
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Save pip cache
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ steps.pip-cache-dir.outputs.dir }}
-          key: ${{ steps.pip-cache.outputs.cache-primary-key }}
-
       - name: Setup Latest Yarn
         uses: threeal/setup-yarn-action@v2.0.0
         with:
           version: latest
-          cache: false
-
-      - name: Restore Yarn cache
-        uses: actions/cache/restore@v4
-        id: yarn-cache
-        with:
-          path: |
-            .yarn/cache
-            .yarn/install-state.gz
-            node_modules
-          key: yarn4-windows-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml') }}
-          restore-keys: |
-            yarn4-windows-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: yarn install --immutable
-
-      - name: Save Yarn cache
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            .yarn/cache
-            .yarn/install-state.gz
-            node_modules
-          key: ${{ steps.yarn-cache.outputs.cache-primary-key }}
 
       - name: Build package
         if: github.event_name != 'release'
